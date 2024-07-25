@@ -36,7 +36,6 @@ def text_gpt():
 
 @app.route("/text_result", methods=["GET", "POST"])
 def text_result():
-    global first_time
     q = request.form.get("q")
     try:
         # 检查请求之间的间隔时间，确保不超过 API 速率限制
@@ -46,12 +45,12 @@ def text_result():
             if elapsed < 2:  # 确保至少有2秒间隔
                 time.sleep(2 - elapsed)
         response = google.generativeai.generate_text(
-            model="gemini-1",  # 假设这是正确的模型ID
+            model={"model":"models/chat-bison-001"},  # 更新模型标识符
             messages=[{"role": "user", "content": q}]
         )
         g.last_request_time = time.time()
         return render_template("text_result.html", r=response.choices[0].message.content)
-    except Exception as e:  # 捕获所有异常
+    except google.generativeai.error.GoogleGenerativeAIError as e:  # 假设这是错误类
         return jsonify({"error": str(e)}), 429
 
 @app.route("/image_gpt", methods=["GET", "POST"])
@@ -60,7 +59,6 @@ def image_gpt():
 
 @app.route("/image_result", methods=["GET", "POST"])
 def image_result():
-    global image_prompt
     q = request.form.get("q")
     response = replicate.run(
         "stability-ai/stable-diffusion:db21e45d3f7023abc2a46ee38a23973f6dce16bb082a930b0c49861f96d1e5bf",
@@ -71,7 +69,6 @@ def image_result():
 
 @app.route("/recreate", methods=["GET", "POST"])
 def recreate():
-    global image_prompt
     response = replicate.run(
         "stability-ai/stable-diffusion:db21e45d3f7023abc2a46ee38a23973f6dce16bb082a930b0c49861f96d1e5bf",
         input={"prompt": image_prompt}
