@@ -90,5 +90,5 @@ def end():
     first_time = 1
     return render_template("end.html", r=r)
 
-if __name == "__main__":
-    app.run(debug=True)
+if __name__ == "__main__":
+    app.run()
