@@ -4,6 +4,8 @@ import os
 import time
 import google.generativeai  # 假设这是Google Generative AI库的导入方式
 
+
+# 配置环境变量
 # 设置环境变量来安全地处理密钥
 os.environ["REPLICATE_API_TOKEN"] = os.getenv("REPLICATE_API_TOKEN")
 google_api_key = os.getenv("GOOGLE_API_KEY")
@@ -12,12 +14,13 @@ google_api_key = os.getenv("GOOGLE_API_KEY")
 google.generativeai.configure(api_key=google_api_key)
 app = Flask(__name__)
 
-# 全局变量
+text_model = {"model": "models/chat-bison-001"}
+
+app = Flask(__name__)
+
 r = ""
 first_time = 1
-image_prompt = ""
 
-# 路由定义
 @app.route("/", methods=["GET", "POST"])
 def index():
     return render_template("index.html")
@@ -37,21 +40,8 @@ def text_gpt():
 @app.route("/text_result", methods=["GET", "POST"])
 def text_result():
     q = request.form.get("q")
-    try:
-        # 检查请求之间的间隔时间，确保不超过 API 速率限制
-        last_request_time = getattr(g, 'last_request_time', None)
-        if last_request_time:
-            elapsed = time.time() - last_request_time
-            if elapsed < 2:  # 确保至少有2秒间隔
-                time.sleep(2 - elapsed)
-        response = google.generativeai.generate_text(
-            model={"model":"models/chat-bison-001"},  # 更新模型标识符
-            messages=[{"role": "user", "content": q}]
-        )
-        g.last_request_time = time.time()
-        return render_template("text_result.html", r=response.choices[0].message.content)
-    except google.generativeai.error.GoogleGenerativeAIError as e:  # 假设这是错误类
-        return jsonify({"error": str(e)}), 429
+    response = google_ai.chat(**text_model, messages=[{"role": "user", "content": q}])
+    return render_template("text_result.html", r=response.choices[0].message.content)
 
 @app.route("/image_gpt", methods=["GET", "POST"])
 def image_gpt():
@@ -60,20 +50,15 @@ def image_gpt():
 @app.route("/image_result", methods=["GET", "POST"])
 def image_result():
     q = request.form.get("q")
-    response = replicate.run(
-        "stability-ai/stable-diffusion:db21e45d3f7023abc2a46ee38a23973f6dce16bb082a930b0c49861f96d1e5bf",
-        input={"prompt": q}
-    )
-    image_prompt = q
-    return render_template("image_result.html", r=response[0])
+    response = google_ai.generate_image(**image_model, prompt=q)
+    time.sleep(10)  # 假定有一定的处理延时
+    return render_template("image_result.html", r=response.url)  # 假设响应中包含图像的URL
 
 @app.route("/recreate", methods=["GET", "POST"])
 def recreate():
-    response = replicate.run(
-        "stability-ai/stable-diffusion:db21e45d3f7023abc2a46ee38a23973f6dce16bb082a930b0c49861f96d1e5bf",
-        input={"prompt": image_prompt}
-    )
-    return render_template("recreate.html", r=response[0])
+    response = google_ai.generate_image(**image_model, prompt=r)
+    time.sleep(10)
+    return render_template("recreate.html", r=response.url)
 
 @app.route("/NTU", methods=["GET", "POST"])
 def NTU():
@@ -91,3 +76,4 @@ def end():
 
 if __name__ == "__main__":
     app.run()
+
