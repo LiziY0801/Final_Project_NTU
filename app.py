@@ -2,7 +2,7 @@ from flask import Flask, request, render_template, jsonify, g
 import replicate
 import os
 import time
-import google.generativeai  
+import google.generativeai  # 假设这是Google Generative AI库的导入方式
 
 # 设置环境变量来安全地处理密钥
 os.environ["REPLICATE_API_TOKEN"] = os.getenv("REPLICATE_API_TOKEN")
@@ -51,7 +51,7 @@ def text_result():
         )
         g.last_request_time = time.time()
         return render_template("text_result.html", r=response.choices[0].message.content)
-    except google.generativeai.error.GoogleGenerativeAIError as e:  # 假设这是错误类
+    except Exception as e:  # 捕获所有异常
         return jsonify({"error": str(e)}), 429
 
 @app.route("/image_gpt", methods=["GET", "POST"])
