@@ -4,9 +4,11 @@ import os
 import time
 import google.generativeai as palm
 
-os.environ["REPLICATE_API_TOKEN"]="r8_DlrBbIdC4sWkHhSaWN66BNjVQRe38IO0BFmUw"
-palm.configure(api_key="AIzaSyA644cQ_NoWSYnyIQ-4CjkFU_o-zHXNg_o")
+REPLICATE_API_TOKEN = os.getenv("REPLICATE_API_TOKEN")
+api = os.getenv("MAKERSUITE_API_TOKEN")
+palm.configure(api_key=api)
 model = {"model":"models/chat-bison-001"}
+
 
 app = Flask(__name__)
 
