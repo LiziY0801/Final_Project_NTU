@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Storage Contract Interaction</title>
+    <script src="https://cdn.jsdelivr.net/npm/web3@latest/dist/web3.min.js"></script>
+    <script>
+        // Ensure you are connected to an Ethereum node
+        if (typeof window.ethereum !== 'undefined') {
+            console.log('MetaMask is installed!');
+            var web3 = new Web3(window.ethereum);
+            window.ethereum.enable(); // Request access to the user's Ethereum account
+        } else {
+            console.log('MetaMask is not installed. Please install MetaMask to use this application.');
+        }
+
+        const contractABI = [
+            {
+                "inputs": [{"internalType": "uint256", "name": "num", "type": "uint256"}],
+                "name": "store",
+                "stateMutability": "nonpayable",
+                "type": "function"
+            },
+            {
+                "inputs": [],
+                "name": "view_money",
+                "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+                "stateMutability": "view",
+                "type": "function"
+            }
+        ];
+
+        const contractAddress = '0xeCbDC66d6439a8ABcc749054772CCec894F8dCDA'; // Keep your own contract address here
+
+        const contract = new web3.eth.Contract(contractABI, contractAddress);
+
+        async function storeNumber() {
+            const num = document.getElementById('numberInput').value;
+            const accounts = await web3.eth.getAccounts();
+            contract.methods.store(num).send({from: accounts[0]})
+            .then(function(tx) {
+                console.log('Transaction:', tx);
+            })
+            .catch(function(error) {
+                console.log('Error:', error.message);
+            });
+        }
+
+        async function fetchNumber() {
+            contract.methods.view_money().call()
+            .then(function(result) {
+                document.getElementById('storedNumber').innerText = 'Stored number: ' + result;
+            });
+        }
+    </script>
+</head>
+<body>
+    <h1>Storage Contract Interaction</h1>
+    <div>
+        <h2>Store a Number</h2>
+        <input type="number" id="numberInput" placeholder="Enter a number">
+        <button onclick="storeNumber()">Store Number</button>
+    </div>
+    <div>
+        <h2>View Stored Number</h2>
+        <button onclick="fetchNumber()">View Number</button>
+        <p id="storedNumber"></p>
+    </div>
+    <form action="/main" method="post">
+        <p><input type="submit" value="Main"></p>
+    </form>
+    <form action="/" method="post">
+        <p><input type="submit" value="Login Page"></p>
+    </form>
+</body>
+</html>
