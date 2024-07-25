@@ -12,9 +12,12 @@ openai_api_key = os.getenv("OPENAI_API_KEY")
 model = OpenAI(api_key=openai_api_key)
 app = Flask(__name__)
 
+# 全局变量
 r = ""
 first_time = 1
+image_prompt = ""
 
+# 路由定义
 @app.route("/", methods=["GET", "POST"])
 def index():
     return render_template("index.html")
@@ -34,12 +37,21 @@ def text_gpt():
 @app.route("/text_result", methods=["GET", "POST"])
 def text_result():
     q = request.form.get("q")
-    response = model.chat.completions.create(
-        model="gpt-3.5-turbo",
-        messages=[{"role": "user", "content": q}]
-    )
-    time.sleep(5)
-    return render_template("text_result.html", r=response.choices[0].message.content)
+    try:
+        # 检查请求之间的间隔时间，确保不超过 API 速率限制
+        last_request_time = getattr(g, 'last_request_time', None)
+        if last_request_time:
+            elapsed = time.time() - last_request_time
+            if elapsed < 2:  # 确保至少有2秒间隔
+                time.sleep(2 - elapsed)
+        response = model.chat.completions.create(
+            model="gpt-3.5-turbo",
+            messages=[{"role": "user", "content": q}]
+        )
+        g.last_request_time = time.time()
+        return render_template("text_result.html", r=response.choices[0].message.content)
+    except OpenAIError as e:
+        return jsonify({"error": str(e)}), 429
 
 @app.route("/image_gpt", methods=["GET", "POST"])
 def image_gpt():
@@ -54,7 +66,6 @@ def image_result():
     )
     global image_prompt
     image_prompt = q
-    time.sleep(10)
     return render_template("image_result.html", r=response[0])
 
 @app.route("/recreate", methods=["GET", "POST"])
@@ -63,7 +74,6 @@ def recreate():
         "stability-ai/stable-diffusion:db21e45d3f7023abc2a46ee38a23973f6dce16bb082a930b0c49861f96d1e5bf",
         input={"prompt": image_prompt}
     )
-    time.sleep(10)
     return render_template("recreate.html", r=response[0])
 
 @app.route("/NTU", methods=["GET", "POST"])
@@ -80,5 +90,5 @@ def end():
     first_time = 1
     return render_template("end.html", r=r)
 
-if __name__ == "__main__":
-    app.run()
+if __name == "__main__":
+    app.run(debug=True)
