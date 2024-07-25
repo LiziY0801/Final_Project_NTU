@@ -34,8 +34,9 @@ def text_gpt():
 @app.route("/text_result", methods=["GET", "POST"])
 def text_result():
     q = request.form.get("q")
-    r = palm.chat(**model,messages=q)
-    return(render_template("text_result.html",r=r.last))
+    response = palm.chat(messages=[q], model="models/chat-bison-001")
+    time.sleep(5)
+    return render_template("text_result.html", r=response.result)
 
 @app.route("/image_gpt",methods=["GET","POST"])
 def image_gpt():
@@ -79,6 +80,10 @@ def end():
     global first_time,r
     first_time = 1
     return(render_template("end.html",r=r))
+
+@app.route("/DApp",methods=["GET","POST"])
+def DApp():
+    return(render_template("DApp.html"))
 
 if __name__ == "__main__":
     app.run()
