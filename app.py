@@ -34,9 +34,8 @@ def text_gpt():
 @app.route("/text_result", methods=["GET", "POST"])
 def text_result():
     q = request.form.get("q")
-    response = palm.chat(messages=[q], model="models/chat-bison-001")
-    time.sleep(5)
-    return render_template("text_result.html", r=response.result)
+    r = palm.chat(**model,messages=q)
+    return(render_template("genAI.html",r=r.last))
 
 @app.route("/image_gpt",methods=["GET","POST"])
 def image_gpt():
